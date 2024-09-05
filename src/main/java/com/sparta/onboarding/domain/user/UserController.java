@@ -6,6 +6,7 @@ import com.sparta.onboarding.domain.user.dto.LoginRequestDto;
 import com.sparta.onboarding.domain.user.dto.SignupRequestDto;
 import com.sparta.onboarding.domain.user.entity.User;
 import com.sparta.onboarding.jwt.JwtUtil;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
+    @Operation(summary = "User SignUp", description = "회원 가입 기능입니다.")
     @PostMapping("/register")
     public ResponseEntity<StatusCommonResponse> signup(@Valid @RequestBody SignupRequestDto requestDto, BindingResult bindingResult) {
         List<FieldError> fieldErrors = bindingResult.getFieldErrors();
@@ -53,6 +55,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "User Login", description = "로그인 기능입니다.")
     @PostMapping("/login")
     public ResponseEntity<StatusCommonResponse> login(@RequestBody LoginRequestDto loginRequestDto) {
         try {
