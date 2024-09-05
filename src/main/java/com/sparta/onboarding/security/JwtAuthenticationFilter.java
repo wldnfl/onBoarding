@@ -1,8 +1,7 @@
 package com.sparta.onboarding.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sparta.onboarding.common.exception.CustomException;
-import com.sparta.onboarding.common.exception.ErrorCode;
+import com.sparta.onboarding.common.response.StatusCommonResponse;
 import com.sparta.onboarding.domain.user.dto.LoginRequestDto;
 import com.sparta.onboarding.domain.user.entity.UserRole;
 import com.sparta.onboarding.jwt.JwtUtil;
@@ -10,6 +9,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -20,16 +22,19 @@ import java.io.IOException;
 @Slf4j(topic = "로그인 및 JWT 생성")
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final JwtUtil jwtUtil;
+    private final ObjectMapper objectMapper;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, AuthenticationManager authenticationManager) {
         this.jwtUtil = jwtUtil;
-        setFilterProcessesUrl("/api/user/login");
+        this.objectMapper = new ObjectMapper();
+        setAuthenticationManager(authenticationManager);
+        setFilterProcessesUrl("/api/users/login");
     }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
-            LoginRequestDto requestDto = new ObjectMapper().readValue(request.getInputStream(), LoginRequestDto.class);
+            LoginRequestDto requestDto = objectMapper.readValue(request.getInputStream(), LoginRequestDto.class);
 
             return getAuthenticationManager().authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -39,27 +44,31 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                     )
             );
         } catch (IOException e) {
-            log.error("로그인 시도 중 오류 발생: {}", e.getMessage());
-            throw new CustomException(ErrorCode.LOGIN_ATTEMPT_FAILED);
+            throw new RuntimeException("로그인 요청 처리 중 오류 발생", e);
         }
     }
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException {
-        String username = ((UserDetailsImpl) authResult.getPrincipal()).getUsername();
-        UserRole role = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getRole();
-        String token = jwtUtil.createToken(username, role);
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, token);
+        UserDetailsImpl userDetails = (UserDetailsImpl) authResult.getPrincipal();
+        String token = jwtUtil.createToken(userDetails.getUsername(), userDetails.getUser().getRole());
 
+        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, JwtUtil.BEARER_PREFIX + token);
+
+        StatusCommonResponse responseBody = new StatusCommonResponse(HttpStatus.OK.value(), "로그인 성공!");
+        response.setStatus(HttpStatus.OK.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write("로그인 성공!\nHttpStatus : " + response.getStatus());
+        objectMapper.writeValue(response.getWriter(), responseBody);
     }
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException {
-        log.error("로그인 실패: {}", failed.getMessage());
-        response.setStatus(401);
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write("로그인 실패: " + failed.getMessage());
+
+        StatusCommonResponse responseBody = new StatusCommonResponse(HttpStatus.UNAUTHORIZED.value(), "로그인 실패: " + failed.getMessage());
+        objectMapper.writeValue(response.getWriter(), responseBody);
     }
 }

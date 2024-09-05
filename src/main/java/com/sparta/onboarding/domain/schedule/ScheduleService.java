@@ -62,13 +62,6 @@ public class ScheduleService {
         if (!schedule.getPassword().equals(password)) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
-
-        if (schedule.isDeleted()) {
-            throw new CustomException(ErrorCode.SCHEDULE_ALREADY_DELETED);
-        }
-
-        schedule.markAsDeleted();
-        scheduleRepository.save(schedule);
     }
 
     public Schedule findScheduleById(Long id) {

@@ -2,6 +2,7 @@ package com.sparta.onboarding.domain.user;
 
 import com.sparta.onboarding.common.exception.CustomException;
 import com.sparta.onboarding.common.exception.ErrorCode;
+import com.sparta.onboarding.domain.user.dto.LoginRequestDto;
 import com.sparta.onboarding.domain.user.dto.SignupRequestDto;
 import com.sparta.onboarding.domain.user.entity.User;
 import com.sparta.onboarding.domain.user.entity.UserRole;
@@ -22,7 +23,7 @@ public class UserService {
 
     public void registerUser(SignupRequestDto requestDto) {
         String username = requestDto.getUsername();
-        String nickname = requestDto.getNickname();
+        String userId = requestDto.getUserId();
         String password = requestDto.getPassword();
 
         if (userRepository.findByUsername(username).isPresent()) {
@@ -42,8 +43,19 @@ public class UserService {
         }
 
         String encodedPassword = passwordEncoder.encode(password);
-        User user = new User(username, encodedPassword, nickname, role);
+        User user = new User(username, encodedPassword, userId, role);
         userRepository.save(user);
+    }
+
+    public User login(LoginRequestDto loginRequestDto) {
+        User user = userRepository.findByUsername(loginRequestDto.getUsername())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        return user;
     }
 
     private boolean isValidUsername(String username) {

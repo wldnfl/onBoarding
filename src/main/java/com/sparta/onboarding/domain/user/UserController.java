@@ -1,10 +1,15 @@
 package com.sparta.onboarding.domain.user;
 
+import com.sparta.onboarding.common.exception.CustomException;
+import com.sparta.onboarding.common.response.StatusCommonResponse;
 import com.sparta.onboarding.domain.user.dto.LoginRequestDto;
 import com.sparta.onboarding.domain.user.dto.SignupRequestDto;
+import com.sparta.onboarding.domain.user.entity.User;
+import com.sparta.onboarding.jwt.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -23,26 +28,51 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
-    // 회원가입 요청 데이터 검증, 오류 있으면 400 상태 반환
     @PostMapping("/register")
-    public ResponseEntity<String> signup(@Valid @RequestBody SignupRequestDto requestDto, BindingResult bindingResult) {
+    public ResponseEntity<StatusCommonResponse> signup(@Valid @RequestBody SignupRequestDto requestDto, BindingResult bindingResult) {
         List<FieldError> fieldErrors = bindingResult.getFieldErrors();
         if (!fieldErrors.isEmpty()) {
-            for (FieldError fieldError : bindingResult.getFieldErrors()) {
+            for (FieldError fieldError : fieldErrors) {
                 log.error(fieldError.getField() + " 필드 : " + fieldError.getDefaultMessage());
             }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("회원가입 정보가 잘못되었습니다.");
+            StatusCommonResponse response = new StatusCommonResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    "회원가입 정보가 잘못되었습니다."
+            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         userService.registerUser(requestDto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("회원가입 성공\nHttpStatus : " + HttpStatus.CREATED);
+        StatusCommonResponse response = new StatusCommonResponse(
+                HttpStatus.CREATED.value(),
+                "회원가입 성공"
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // 로그인 요청이 들어오는데 JwtAuthenticationFilter가 이 요청을 가로채 인증 시도
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequestDto loginRequestDto) {
-        return ResponseEntity.ok().body("로그인 성공!");
+    public ResponseEntity<StatusCommonResponse> login(@RequestBody LoginRequestDto loginRequestDto) {
+        try {
+            User user = userService.login(loginRequestDto);
+            String token = jwtUtil.createToken(user.getUsername(), user.getRole());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(JwtUtil.AUTHORIZATION_HEADER, JwtUtil.BEARER_PREFIX + token);
+
+            StatusCommonResponse response = new StatusCommonResponse(
+                    HttpStatus.OK.value(),
+                    "로그인 성공!"
+            );
+            return ResponseEntity.ok().headers(headers).body(response);
+        } catch (CustomException e) {
+            StatusCommonResponse response = new StatusCommonResponse(
+                    e.getErrorCode().getStatus().value(), // Use getStatus() to get HttpStatus
+                    e.getErrorCode().getMessage()
+            );
+            return ResponseEntity.status(e.getErrorCode().getStatus()).body(response);
+        }
     }
 }

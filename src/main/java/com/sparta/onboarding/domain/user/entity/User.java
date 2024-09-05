@@ -4,22 +4,21 @@ import com.sparta.onboarding.common.Timestamped;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
+@Table(name = "users")
 @Getter
-@Setter
-@Table(name = "user")
 @NoArgsConstructor
 public class User extends Timestamped {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String nickname;
+    private String userId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String username;
 
     @Column(nullable = false)
@@ -29,10 +28,10 @@ public class User extends Timestamped {
     @Enumerated(value = EnumType.STRING)
     private UserRole role;
 
-    public User(String username, String password, String nickname, UserRole role) {
+    public User(String username, String password, String userId, UserRole role) {
         this.username = username;
         this.password = password;
-        this.nickname = nickname;
+        this.userId = userId;
         this.role = role;
     }
 }

@@ -2,6 +2,7 @@ package com.sparta.onboarding.security;
 
 import com.sparta.onboarding.domain.user.entity.User;
 import com.sparta.onboarding.domain.user.entity.UserRole;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,7 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.ArrayList;
 import java.util.Collection;
 
-// UserDetails 인터페이스를 구현해 Spring Security에서 사용할 수 있는 사용자 정보 객체 제공
+@Getter
 public class UserDetailsImpl implements UserDetails {
 
     private final User user;
@@ -17,8 +18,6 @@ public class UserDetailsImpl implements UserDetails {
     public UserDetailsImpl(User user) {
         this.user = user;
     }
-
-    public User getUser() {return user;}
 
     @Override
     public String getPassword() {
