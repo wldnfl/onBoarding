@@ -18,13 +18,13 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
 
     public ScheduleResponse createSchedule(ScheduleRequestDto scheduleRequestDto) {
-        Schedule schedule = new Schedule();
-        schedule.setTitle(scheduleRequestDto.getTitle());
-        schedule.setContent(scheduleRequestDto.getContent());
-        schedule.setPassword(scheduleRequestDto.getPassword());
-        schedule.setUsername(scheduleRequestDto.getUsername());
-        schedule.setCreatedAt(LocalDateTime.now());
-        schedule.setDeleted(false);
+        Schedule schedule = new Schedule(
+                scheduleRequestDto.getTitle(),
+                scheduleRequestDto.getContent(),
+                scheduleRequestDto.getPassword(),
+                scheduleRequestDto.getUsername(),
+                LocalDateTime.now()
+        );
         scheduleRepository.save(schedule);
         return ScheduleResponse.toDto(schedule);
     }
@@ -67,7 +67,7 @@ public class ScheduleService {
             throw new CustomException(ErrorCode.SCHEDULE_ALREADY_DELETED);
         }
 
-        schedule.setDeleted(true);
+        schedule.markAsDeleted();
         scheduleRepository.save(schedule);
     }
 

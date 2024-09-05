@@ -1,13 +1,12 @@
 package com.sparta.onboarding.domain.schedule;
 
-import com.sparta.onboarding.domain.comment.Comment;
 import com.sparta.onboarding.common.Timestamped;
+import com.sparta.onboarding.domain.comment.Comment;
 import com.sparta.onboarding.domain.schedule.dto.ScheduleRequestDto;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
 
 import java.time.LocalDateTime;
@@ -15,7 +14,6 @@ import java.util.List;
 
 @Entity
 @Getter
-@Setter
 @Table(name = "schedule")
 @NoArgsConstructor
 public class Schedule extends Timestamped {
@@ -46,6 +44,14 @@ public class Schedule extends Timestamped {
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Comment> comments;
 
+    public Schedule(String title, String content, String password, String username, LocalDateTime createdAt) {
+        this.title = title;
+        this.content = content;
+        this.password = password;
+        this.username = username;
+        this.createdAt = createdAt;
+    }
+
     public void update(ScheduleRequestDto requestDto) {
         if (requestDto.getTitle() != null && !requestDto.getTitle().isBlank()) {
             this.title = requestDto.getTitle();
@@ -64,9 +70,10 @@ public class Schedule extends Timestamped {
         }
     }
 
-    public void setDeleted(boolean deleted) {
-        this.deleted = deleted;
+    public void markAsDeleted() {
+        this.deleted = true;
     }
+
     public boolean isDeleted() {
         return deleted;
     }

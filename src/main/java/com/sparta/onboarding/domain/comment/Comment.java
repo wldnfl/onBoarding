@@ -1,19 +1,15 @@
 package com.sparta.onboarding.domain.comment;
 
-import com.sparta.onboarding.domain.schedule.Schedule;
 import com.sparta.onboarding.common.Timestamped;
+import com.sparta.onboarding.domain.schedule.Schedule;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-import java.time.LocalDateTime;
-
-@Entity
 @Getter
-@Setter
-@Table(name = "comment")
 @NoArgsConstructor
+@Entity
+@Table(name = "comments")
 public class Comment extends Timestamped {
 
     @Id
@@ -21,26 +17,22 @@ public class Comment extends Timestamped {
     private Long id;
 
     @Column(nullable = false)
-    private String content;
+    private String comment;
 
     @Column(nullable = false)
     private String username;
 
-    @Column(nullable = false, name = "createdAt")
-    private LocalDateTime createdAt;
-
-    @ManyToOne
-    @JoinColumn(name = "scheduleId", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule;
 
-    public Comment(String content, String username, Schedule schedule) {
-        this.content = content;
+    public Comment(String comment, String username, Schedule schedule) {
+        this.comment = comment;
         this.username = username;
-        this.createdAt = LocalDateTime.now();
         this.schedule = schedule;
     }
 
-    public void update(String content) {
-        this.content = content;
+    public void updateComment(String comment) {
+        this.comment = comment;
     }
 }
