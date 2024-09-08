@@ -30,9 +30,15 @@ public class UserService {
             throw new CustomException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
-        if (!isValidUsername(username) || !isValidPassword(password)) {
-            throw new CustomException(ErrorCode.INVALID_USERNAME_OR_PASSWORD);
+
+        if (!isValidUsername(username)) {
+            throw new CustomException(ErrorCode.INVALID_USERNAME);
         }
+
+        if (!isValidPassword(password)) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
 
         UserRole role = UserRole.USER;
         if (requestDto.isAdmin()) {
