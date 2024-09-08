@@ -1,5 +1,8 @@
 package com.sparta.onboarding.domain.user.entity;
 
+import lombok.Getter;
+
+@Getter
 public enum UserRole {
     USER(Authority.USER),  // 사용자 권한
     ADMIN(Authority.ADMIN);  // 관리자 권한
@@ -8,10 +11,6 @@ public enum UserRole {
 
     UserRole(String authority) {
         this.authority = authority;
-    }
-
-    public String getAuthority() {
-        return this.authority;
     }
 
     public static class Authority {
